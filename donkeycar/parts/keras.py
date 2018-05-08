@@ -213,13 +213,14 @@ def default_categorical(input_shape=(120, 160, 3)):
     from keras.layers import Input, Dense, merge
     from keras.models import Model
     from keras.layers import Convolution2D, MaxPooling2D, Reshape, BatchNormalization
-    from keras.layers import Activation, Dropout, Flatten, Dense    
+    from keras.layers import Activation, Dropout, Flatten, Dense, Cropping2D
     
     opt = keras.optimizers.Adam()
     drop = 0.1
 
     img_in = Input(shape=input_shape, name='img_in')                      # First layer, input layer, Shape comes from camera.py resolution, RGB
     x = img_in
+    x = Cropping2D(cropping=((40,0), (0,0)))(x)                             # trim 40 pixels off top
     x = Convolution2D(24, (5,5), strides=(2,2), activation='relu')(x)       # 24 features, 5 pixel x 5 pixel kernel (convolution, feauture) window, 2wx2h stride, relu activation
     x = Dropout(drop)(x)                                                      # Randomly drop out (turn off) 10% of the neurons (Prevent overfitting)
     x = Convolution2D(32, (5,5), strides=(2,2), activation='relu')(x)       # 32 features, 5px5p kernel window, 2wx2h stride, relu activatiion
