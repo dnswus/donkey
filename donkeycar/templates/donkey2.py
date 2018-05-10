@@ -158,7 +158,7 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
                 print("recorded", num_records, "records")
                 led_cond.last_num_rec_print = num_records
 
-        if behavior_state is not None and model_type == 'behavior':
+        if cfg.HAVE_RGB_LED and behavior_state is not None and model_type == 'behavior':
             r, g, b = cfg.BEHAVIOR_LED_COLORS[behavior_state]
             led.set_rgb(r, g, b)
             return -1 #solid on
