@@ -15,6 +15,7 @@ import subprocess
 
 from PIL import Image
 import numpy as np
+from scipy.ndimage.filters import gaussian_filter
 
 '''
 IMAGES
@@ -115,6 +116,13 @@ def load_scaled_image_arr(filename, cfg):
     if img_arr.shape[2] == 3 and cfg.IMAGE_DEPTH == 1:
         img_arr = dk.utils.rgb2gray(img_arr).reshape(cfg.IMAGE_H, cfg.IMAGE_W, 1)
     return img_arr
+
+
+def blur(img, sigma=7):
+    '''
+    take a numpy image and return the image with gaussian_filter applied
+    '''
+    return gaussian_filter(img, sigma)
 
 
 '''

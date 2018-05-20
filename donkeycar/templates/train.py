@@ -2,8 +2,8 @@
 """
 Scripts to train a keras model using tensorflow.
 Uses the data written by the donkey v2.2 tub writer,
-but faster training with proper sampling of distribution over tubs. 
-Has settings for continuous training that will look for new files as it trains. 
+but faster training with proper sampling of distribution over tubs.
+Has settings for continuous training that will look for new files as it trains.
 Modify on_best_model if you wish continuous training to update your pi as it builds.
 You can drop this in your ~/d2 dir.
 Basic usage should feel familiar: python train.py --model models/mypilot
@@ -14,7 +14,7 @@ Usage:
     train.py [--tub=<tub1,tub2,..tubn>] (--model=<model>) [--transfer=<model>] [--type=(linear|categorical|rnn|imu|behavior|3d)] [--continuous] [--aug]
 
 Options:
-    -h --help     Show this screen.    
+    -h --help     Show this screen.
 """
 import os
 import glob
@@ -48,7 +48,7 @@ try:
     do_plot = True
 except:
     do_plot = False
-    
+
 deterministic = False
 
 if deterministic:
@@ -110,10 +110,10 @@ def collate_records(records, gen_records, opts):
 
     for record_path in records:
 
-        basepath = os.path.dirname(record_path)        
+        basepath = os.path.dirname(record_path)
         index = get_record_index(record_path)
         sample = { 'tub_path' : basepath, "index" : index }
-             
+
         key = make_key(sample)
 
         if key in gen_records:
@@ -127,7 +127,7 @@ def collate_records(records, gen_records, opts):
 
         sample['record_path'] = record_path
         sample["image_path"] = image_path
-        sample["json_data"] = json_data        
+        sample["json_data"] = json_data
 
         angle = float(json_data['user/angle'])
         throttle = float(json_data["user/throttle"])
@@ -219,11 +219,11 @@ class MyCPCallback(keras.callbacks.ModelCheckpoint):
         '''
         when reset best is set, we want to make sure to run an entire epoch
         before setting our new best on the new total records
-        '''        
+        '''
         if self.reset_best_end_of_epoch:
             self.reset_best_end_of_epoch = False
             self.best = np.Inf
-        
+
 
 def on_best_model(cfg, model, model_filename):
     #Save json and weights file too
@@ -238,11 +238,11 @@ def on_best_model(cfg, model, model_filename):
     #On mac or linux we have scp:
     if not on_windows:
         print('sending model to the pi')
-        
+
         command = 'scp %s %s@%s:~/%s/models/;' % (weights_fnm, cfg.PI_USERNAME, cfg.PI_HOSTNAME, cfg.PI_DONKEY_ROOT)
         command += 'scp %s %s@%s:~/%s/models/;' % (json_fnm, cfg.PI_USERNAME, cfg.PI_HOSTNAME, cfg.PI_DONKEY_ROOT)
         command += 'scp %s %s@%s:~/%s/models/;' % (model_filename, cfg.PI_USERNAME, cfg.PI_HOSTNAME, cfg.PI_DONKEY_ROOT)
-    
+
         print("sending", command)
         res = os.system(command)
         print(res)
@@ -283,7 +283,7 @@ def on_best_model(cfg, model, model_filename):
             ssh.load_host_keys(os.path.expanduser(os.path.join("~", ".ssh", "known_hosts")))
             ssh.connect(server, username=username, password=password)
             sftp = ssh.open_sftp()
-        
+
             for localpath, remotepath in files:
                 sftp.put(localpath, remotepath)
 
@@ -292,20 +292,20 @@ def on_best_model(cfg, model, model_filename):
             print("send succeded")
         except:
             print("send failed")
-    
+
 
 def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, aug):
     '''
     use the specified data in tub_names to train an artifical neural network
     saves the output trained model as model_name
-    ''' 
+    '''
 
     verbose = cfg.VEBOSE_TRAIN
 
-    
+
     if continuous:
         print("continuous training")
-    
+
     gen_records = {}
     opts = {}
 
@@ -323,10 +323,10 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
 
         #when transfering models, should we freeze all but the last N layers?
         if cfg.FREEZE_LAYERS:
-            num_to_freeze = len(kl.model.layers) - cfg.NUM_LAST_LAYERS_TO_TRAIN 
-            print('freezing %d layers' % num_to_freeze)           
+            num_to_freeze = len(kl.model.layers) - cfg.NUM_LAST_LAYERS_TO_TRAIN
+            print('freezing %d layers' % num_to_freeze)
             for i in range(num_to_freeze):
-                kl.model.layers[i].trainable = False        
+                kl.model.layers[i].trainable = False
 
     if cfg.OPTIMIZER:
         kl.set_optimizer(cfg.OPTIMIZER, cfg.LEARNING_RATE, cfg.LEARNING_RATE_DECAY)
@@ -335,7 +335,7 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
 
     if cfg.PRINT_MODEL_SUMMARY:
         print(kl.model.summary())
-    
+
     opts['keras_pilot'] = kl
     opts['continuous'] = continuous
 
@@ -344,7 +344,10 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
     collate_records(records, gen_records, opts)
 
     def generator(save_best, opts, data, batch_size, isTrainSet=True):
-        
+
+        training_flip = isTrainSet and cfg.TRAINING_FLIP
+        training_blur = isTrainSet and cfg.TRAINING_BLUR
+
         num_records = len(data)
 
         while True:
@@ -360,7 +363,7 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
                     new_num_rec = len(data)
                     if new_num_rec > num_records:
                         print('picked up', new_num_rec - num_records, 'new records!')
-                        num_records = new_num_rec 
+                        num_records = new_num_rec
                         save_best.reset_best()
 
             batch_data = []
@@ -378,7 +381,7 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
 
             if type(kl.model.input) is list:
                 model_in_shape = (2, 1)
-            else:    
+            else:
                 model_in_shape = kl.model.input.shape
 
             has_imu = type(kl) is KerasIMU
@@ -407,17 +410,17 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
                         #get image data if we don't already have it
                         if record['img_data'] is None:
                             filename = record['image_path']
-                            
-                            img_arr = load_scaled_image_arr(filename, cfg)
-                            
-                            if aug:
-                                img_arr = augment_image(img_arr)
 
+                            img_arr = load_scaled_image_arr(filename, cfg)
+
+                            # if aug:
+                            #     img_arr = augment_image(img_arr)
+                            #
                             record['img_data'] = img_arr
-                            
+
                         if has_imu:
                             inputs_imu.append(record['imu_array'])
-                        
+
                         if has_bvh:
                             inputs_bvh.append(record['behavior_arr'])
 
@@ -425,7 +428,40 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
                         angles.append(record['angle'])
                         throttles.append(record['throttle'])
 
-                    img_arr = np.array(inputs_img).reshape(batch_size,\
+                        if training_flip:
+                            if has_imu:
+                                inputs_imu.append(record['imu_array'])
+
+                            if has_bvh:
+                                inputs_bvh.append(record['behavior_arr'])
+
+                            inputs_img.append(np.fliplr(record['img_data']))
+                            angles.append(record['angle'][::-1])
+                            throttles.append(record['throttle'])
+
+                        if training_blur:
+                            if has_imu:
+                                inputs_imu.append(record['imu_array'])
+
+                            if has_bvh:
+                                inputs_bvh.append(record['behavior_arr'])
+
+                            inputs_img.append(blur(record['img_data']))
+                            angles.append(record['angle'])
+                            throttles.append(record['throttle'])
+
+                        if training_flip and training_blur:
+                            if has_imu:
+                                inputs_imu.append(record['imu_array'])
+
+                            if has_bvh:
+                                inputs_bvh.append(record['behavior_arr'])
+
+                            inputs_img.append(np.fliplr(blur(record['img_data'])))
+                            angles.append(record['angle'][::-1])
+                            throttles.append(record['throttle'])
+
+                    img_arr = np.array(inputs_img).reshape(len(inputs_img),\
                         cfg.IMAGE_H, cfg.IMAGE_W, cfg.IMAGE_DEPTH)
 
                     if has_imu:
@@ -450,22 +486,22 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
     #checkpoint to save model after each epoch and send best to the pi.
     save_best = MyCPCallback(send_model_cb=on_best_model,
                                     filepath=model_path,
-                                    monitor='val_loss', 
-                                    verbose=verbose, 
-                                    save_best_only=True, 
+                                    monitor='val_loss',
+                                    verbose=verbose,
+                                    save_best_only=True,
                                     mode='min',
                                     cfg=cfg)
 
     #stop training if the validation error stops improving.
-    early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', 
-                                                min_delta=cfg.MIN_DELTA, 
-                                                patience=cfg.EARLY_STOP_PATIENCE, 
-                                                verbose=verbose, 
+    early_stop = keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                min_delta=cfg.MIN_DELTA,
+                                                patience=cfg.EARLY_STOP_PATIENCE,
+                                                verbose=verbose,
                                                 mode='auto')
 
     train_gen = generator(save_best, opts, gen_records, cfg.BATCH_SIZE, True)
     val_gen = generator(save_best, opts, gen_records, cfg.BATCH_SIZE, False)
- 
+
 
     total_records = len(gen_records)
 
@@ -480,12 +516,12 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
 
     print("train: %d, val: %d" % (num_train, num_val))
     print('total records: %d' %(total_records))
-    
+
     if not continuous:
         steps_per_epoch = num_train // cfg.BATCH_SIZE
     else:
         steps_per_epoch = 100
-    
+
     val_steps = 10
     print('steps_per_epoch', steps_per_epoch)
 
@@ -504,14 +540,14 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
 
     if cfg.USE_EARLY_STOP and not continuous:
         callbacks_list.append(early_stop)
-    
+
     history = kl.model.fit_generator(
-                    train_gen, 
-                    steps_per_epoch=steps_per_epoch, 
-                    epochs=epochs, 
-                    verbose=cfg.VEBOSE_TRAIN, 
+                    train_gen,
+                    steps_per_epoch=steps_per_epoch,
+                    epochs=epochs,
+                    verbose=cfg.VEBOSE_TRAIN,
                     validation_data=val_gen,
-                    callbacks=callbacks_list, 
+                    callbacks=callbacks_list,
                     validation_steps=val_steps,
                     workers=workers_count,
                     use_multiprocessing=use_multiprocessing)
@@ -657,8 +693,8 @@ def sequence_train(cfg, tub_names, model_name, transfer_model, model_type, conti
                         #get image data if we don't already have it
                         if record['img_data'] is None:
                             img_arr = load_scaled_image_arr(record['image_path'], cfg)
-                            record['img_data'] = img_arr                            
-                            
+                            record['img_data'] = img_arr
+
                         inputs_img.append(record['img_data'])
                     labels.append(seq[-1]['target_output'])
 
@@ -674,7 +710,7 @@ def sequence_train(cfg, tub_names, model_name, transfer_model, model_type, conti
 
     train_gen = generator(train_data)
     val_gen = generator(val_data)
-    
+
 
     model_path = os.path.expanduser(model_name)
 
@@ -689,8 +725,8 @@ def sequence_train(cfg, tub_names, model_name, transfer_model, model_type, conti
     if steps_per_epoch < 2:
         raise Exception("Too little data to train. Please record more records.")
 
-    kl.train(train_gen, 
-        val_gen, 
+    kl.train(train_gen,
+        val_gen,
         saved_model_path=model_path,
         steps=steps_per_epoch,
         train_split=cfg.TRAIN_TEST_SPLIT,
@@ -707,7 +743,7 @@ def multi_train(cfg, tub, model, transfer, model_type, continuous, aug):
         train_fn = sequence_train
 
     train_fn(cfg, tub, model, transfer, model_type, continuous, aug)
-    
+
 if __name__ == "__main__":
     args = docopt(__doc__)
     cfg = dk.load_config()
@@ -718,4 +754,3 @@ if __name__ == "__main__":
     continuous = args['--continuous']
     aug = args['--aug']
     multi_train(cfg, tub, model, transfer, model_type, continuous, aug)
-    
