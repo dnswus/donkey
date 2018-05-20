@@ -25,6 +25,7 @@ from donkeycar.parts.imu import Mpu6050
 import numpy as np
 from donkeycar.parts.throttle_filter import ThrottleFilter
 from donkeycar.parts.behavior import BehaviorPart
+from donkeycar.parts.object_detector import ObjectDetector
 
 def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type='single'):
     '''
@@ -103,6 +104,9 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
             
         V.add(cam, outputs=['cam/image_array'], threaded=True)
         
+    obj_detector = ObjectDetector()
+    V.add(obj_detector, inputs=['cam/image_array'], outputs=['cam/obj_detected'], threaded=True)
+
     if use_joystick or cfg.USE_JOYSTICK_AS_DEFAULT:
         #modify max_throttle closer to 1.0 to have more power
         #modify steering_scale lower than 1.0 to have less responsive steering
