@@ -346,6 +346,7 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
     def generator(save_best, opts, data, batch_size, isTrainSet=True):
 
         training_flip = isTrainSet and cfg.TRAINING_FLIP
+        training_flip_center = isTrainSet and cfg.TRAINING_FLIP_CENTER
         training_blur = isTrainSet and cfg.TRAINING_BLUR
 
         num_records = len(data)
@@ -428,7 +429,15 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
                         angles.append(record['angle'])
                         throttles.append(record['throttle'])
 
+                        do_flip = False
                         if training_flip:
+                            if training_flip_center:
+                                do_flip = True
+                            else:
+                                is_center = np.array_equal(record['angle'], record['angle'][::-1])
+                                do_flip = not is_center
+
+                        if do_flip:
                             if has_imu:
                                 inputs_imu.append(record['imu_array'])
 
@@ -450,7 +459,7 @@ def train(cfg, tub_names, model_name, transfer_model, model_type, continuous, au
                             angles.append(record['angle'])
                             throttles.append(record['throttle'])
 
-                        if training_flip and training_blur:
+                        if do_flip and training_blur:
                             if has_imu:
                                 inputs_imu.append(record['imu_array'])
 

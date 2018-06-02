@@ -82,6 +82,7 @@ LEARNING_RATE = 0.001           #only used when OPTIMIZER specified
 LEARNING_RATE_DECAY = 0.0       #only used when OPTIMIZER specified
 SEND_BEST_MODEL_TO_PI = False   #change to true to automatically send best model during training
 TRAINING_FLIP = False           #flip image and angle for training
+TRAINING_FLIP_CENTER = False    #flip image for data with angle 0 for training
 TRAINING_BLUR = False           #blur image for training
 
 #model transfer options
