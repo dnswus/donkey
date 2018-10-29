@@ -6,11 +6,11 @@ functions to run and train autopilots using keras
 
 """
 
-from tensorflow.python.keras.layers import Input
-from tensorflow.python.keras.models import Model, load_model
-from tensorflow.python.keras.layers import Convolution2D
-from tensorflow.python.keras.layers import Dropout, Flatten, Dense, Cropping2D, Lambda
-from tensorflow.python.keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.layers import Input
+from keras.models import Model, load_model
+from keras.layers import Convolution2D
+from keras.layers import Dropout, Flatten, Dense, Cropping2D, Lambda
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 
 from donkeycar import util
 
@@ -133,7 +133,7 @@ def default_categorical():
     return model
 
 
-from tensorflow.python.keras import backend as K
+from keras import backend as K
 
 
 def linear_unbin_layer(tnsr):
